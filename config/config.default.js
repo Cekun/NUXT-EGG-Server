@@ -1,7 +1,7 @@
 /* eslint valid-jsdoc: "off" */
 
 'use strict';
-
+const path = require('path')
 /**
  * @param {Egg.EggAppInfo} appInfo app info
  */
@@ -22,6 +22,12 @@ module.exports = appInfo => {
   const userConfig = {
     // myAppName: 'egg',
   };
+
+  config.multipart = {
+    mode: 'file',
+    whitelist: ()=>true
+  }
+  config.UPLOAD_DIR = path.resolve(__dirname, '..', 'app/public')
 
   return {
     ...config,

@@ -1,6 +1,7 @@
 const svgCaptcha = require('svg-captcha');
-const BaseController = require('./base')
-
+const BaseController = require('./base');
+const fse = require('fs-extra');
+const path = require('path')
 class UtilController extends BaseController {
   async captcha() {
     const captcha = svgCaptcha.create();
@@ -13,7 +14,7 @@ class UtilController extends BaseController {
     const { ctx } = this;
     const email = ctx.query.email
     let code = Math.random().toString().slice(2, 6)
-    console.log('email: '+email+' code: '+ code);
+    console.log('email: ' + email+' code: '+ code);
     ctx.session.emailcode = code
 
     const subject = '登录验证码'
@@ -25,6 +26,30 @@ class UtilController extends BaseController {
       return this.message('发送成功！');
     else 
       return this.error('发送失败')
+  }
+  async uploadfile() {
+    // public/hash/{hash+index}
+    const { ctx } = this;
+    const file = ctx.request.files[0]
+    const { name, hash } = ctx.request.body
+
+    const chunkPath = path.resolve(this.config.UPLOAD_DIR, hash)
+
+    if(!fse.existsSync(chunkPath))
+      await fse.mkdir(chunkPath)
+
+    await fse.move(file.filepath, `${chunkPath}/${name}`)
+    this.success('切片上传成功')
+  }
+
+  async mergefile() {
+    const { ext, size, hash } = this.ctx.request.body
+    const filePath = path.resolve(this.config.UPLOAD_DIR, `${hash}.${ext}`)
+    console.log('filepath: ', filePath);
+    await this.ctx.service.tools.mergeFile(filePath, hash, size)
+    this.success({
+      url: `/public/${filePath}`
+    })
   }
 }
 
